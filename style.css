@@ -1,44 +1,48 @@
-/* Centering the container, etc. are handled by Bootstrap classes;
-   we’ll focus on the SVG circle styling here. */
-
-.progress-circle {
-  position: relative;
-  width: 200px; /* Adjust as needed */
-  height: 200px;
+.container {
+  max-width: 600px;
 }
 
-/* The SVG itself is sized to fill the container */
+/* Circle container: size it as you wish */
+.progress-circle {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto; /* center horizontally */
+}
+
 .circle-container {
   width: 100%;
   height: 100%;
-  transform: rotate(0deg);
-  /* Rotates the circle so "start" is at the top instead of the 3 o'clock position */
+  transform: rotate(0deg); /* so the circle starts from the top */
 }
 
-/* Background circle (gray) */
 .circle-bg {
-  fill: none; /* We only need the stroke, not a fill */
-  stroke: #e6e6e6; /* Light gray background stroke */
+  fill: none;
+  stroke: #eee;
   stroke-width: 3.8;
 }
 
-/* Active progress circle */
 .circle {
   fill: none;
+  stroke: #007bff;
   stroke-width: 3.8;
-  stroke: #007bff; /* Blue for Bootstrap's primary color */
-  stroke-linecap: round; /* Rounded ends on the stroke */
+  stroke-linecap: round;
   transition: stroke-dasharray 0.5s ease;
 }
 
-/* Centered text overlay */
+/* Center the time text in the circle */
 .time-text {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(0deg);
-  /* rotate(90deg) counteracts the -90deg of the SVG,
-       so the text appears in the normal orientation */
-  font-size: 2rem; /* Adjust as needed */
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
   font-weight: bold;
+}
+
+/* Interval label styling (optional) */
+#intervalLabel {
+  margin-top: 1rem;
+  font-size: 1.25rem;
+  color: #666;
 }

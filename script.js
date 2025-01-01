@@ -1,74 +1,185 @@
-// Get the elements
+/************************************************************
+ * Configuration: intervals array
+ * Example cycle: 25-minute work, 5-minute short break,
+ * repeated multiple times or expanded as needed.
+ ************************************************************/
+// For a simple 2-step cycle:
+// const intervals = [
+//   { name: 'Work', duration: 25 * 60 },
+//   { name: 'Short Break', duration: 5 * 60 },
+// ];
+
+const intervals = [
+  { name: "Work 1", duration: 1 * 10 },
+  { name: "Short Break", duration: 1 * 10 },
+  { name: "Work 2", duration: 1 * 10 },
+  { name: "Short Break", duration: 1 * 10 },
+  { name: "Work 3", duration: 1 * 10 },
+  { name: "Short Break", duration: 1 * 10 },
+  { name: "Work 4", duration: 1 * 10 },
+  { name: "Long Break", duration: 1 * 10 },
+];
+
+/************************************************************
+ * Global variables and DOM element references
+ ************************************************************/
+let currentIntervalIndex = 0;
+let timeLeft = 0;
+let timerInterval = null;
+
 const startButton = document.getElementById("start");
 const resetButton = document.getElementById("reset");
 const timerDisplay = document.getElementById("timer");
-const circle = document.querySelector(".circle"); // Our colored circle path
+const intervalLabel = document.getElementById("intervalLabel");
+const circle = document.querySelector(".circle");
 
-// Set the initial timer time (25 minutes in seconds)
-let timeLeft = 1 * 60; // 25 minutes
-let timerInterval = null; // We'll set this to null initially
-const totalTime = 1 * 60; 
+/************************************************************
+ * Initialization
+ ************************************************************/
+// Load the first interval when the page is ready
+loadInterval();
 
-// Function to start or pause the timer
-function startTimer() {
-  // If there's an active interval, clear it (pause)
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  } else {
-    // Start a new timer if not running
-    timerInterval = setInterval(updateTimer, 1000); // Update every second
-  }
-}
-
-// Function to update the timer display
-function updateTimer() {
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval); // Stop the timer when it reaches 0
-    timerInterval = null; // Reset the interval variable
-    alert("Pomodoro session complete!");
-    return;
-  }
-
-  timeLeft--; // Decrease the time by 1 second
-
-  // Format time in mm:ss format
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  timerDisplay.textContent = `${minutes < 10 ? "0" + minutes : minutes}:${
-    seconds < 10 ? "0" + seconds : seconds
-  }`;
-
-  // Update the circle
-  updateCircle();
-}
-
-// Function to reset the timer
-function resetTimer() {
-  clearInterval(timerInterval); // Stop the timer if it's running
-  timerInterval = null; // Reset the interval variable
-  timeLeft = 1 * 60; // Reset time to 25 minutes
-  timerDisplay.textContent = "01:00"; // Reset the display
-  updateCircle(true); // Reset circle to full
-}
-
-// Update the SVG circle to reflect the current time left
-function updateCircle(isReset = false) {
-  if (isReset) {
-    // For a reset, just fill the circle back to 100%
-    circle.style.strokeDasharray = "100, 100";
-    return;
-  }
-
-  // Calculate the percentage of time remaining
-  const fractionLeft = (timeLeft / totalTime) * 100;
-  // strokeDasharray format: "<filled>, 100"
-  // As timeLeft decreases, fractionLeft gets smaller
-  circle.style.strokeDasharray = `${fractionLeft}, 100`;
-}
-// Event listeners
+// Attach event listeners
 startButton.addEventListener("click", startTimer);
 resetButton.addEventListener("click", resetTimer);
 
-// Initialize the circle to 100% on page load
-updateCircle(true);
+/************************************************************
+ * Functions
+ ************************************************************/
+
+/**
+ * loadInterval()
+ * Sets timeLeft from the intervals array based on currentIntervalIndex,
+ * updates the display and resets the circle to full.
+ */
+function loadInterval() {
+  const currentInterval = intervals[currentIntervalIndex];
+  timeLeft = currentInterval.duration;
+
+  // Update the numeric display
+  updateDisplay(timeLeft);
+
+  // Optional: display the name of the current interval
+  if (intervalLabel) {
+    intervalLabel.textContent = currentInterval.name;
+  }
+
+  // **Set the stroke color based on the interval name**
+  if (currentInterval.name.toLowerCase().includes("break")) {
+    // Green for break
+    circle.style.stroke = "#28a745";
+  } else {
+    // Blue for work
+    circle.style.stroke = "#007bff";
+  }
+
+  // Reset the circle visually
+  updateCircle(true);
+}
+
+/**
+ * startTimer()
+ * Toggles the timer on/off. If it's running, pause it; if it's paused, start it.
+ */
+function startTimer() {
+  if (timerInterval) {
+    // Timer is running: pause it
+    clearInterval(timerInterval);
+    timerInterval = null;
+    // Change the button text back to "Start"
+    startButton.textContent = "Start";
+    // Remove the gray color and add the blue color
+    startButton.classList.remove("btn-secondary");
+    startButton.classList.add("btn-primary");
+  } else {
+    // Timer is not running: start it
+    timerInterval = setInterval(updateTimer, 1000);
+    // Change the button text to "Stop"
+    startButton.textContent = "Stop";
+    // Remove the blue color and add the gray color
+    startButton.classList.remove("btn-primary");
+    startButton.classList.add("btn-secondary");
+  }
+}
+
+/**
+ * updateTimer()
+ * Called every second (1000ms) to decrement the time.
+ * If timeLeft hits 0, move to the next interval.
+ */
+function updateTimer() {
+  if (timeLeft <= 0) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    moveToNextInterval();
+    return;
+  }
+
+  timeLeft--;
+  updateDisplay(timeLeft);
+  updateCircle();
+}
+
+/**
+ * resetTimer()
+ * Stops the timer, resets to the first interval in the list.
+ */
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  currentIntervalIndex = 0;
+  loadInterval();
+  // Reset the button text to "Start"
+  startButton.textContent = "Start";
+  startButton.classList.remove("btn-secondary");
+  startButton.classList.add("btn-primary");
+}
+
+/**
+ * moveToNextInterval()
+ * Advances currentIntervalIndex to the next interval.
+ * If we exceed the array length, either loop or stop.
+ */
+function moveToNextInterval() {
+  currentIntervalIndex++;
+
+  // If we've completed all intervals, loop or handle differently
+  if (currentIntervalIndex >= intervals.length) {
+    // Looping back to the first interval:
+    currentIntervalIndex = 0;
+    // or stop if you prefer:
+    // alert("All intervals complete!");
+    // return;
+  }
+
+  // Load the new interval
+  loadInterval();
+  // Optionally auto-start the next interval
+  startTimer();
+}
+
+/**
+ * updateDisplay(seconds)
+ * Formats timeLeft in mm:ss and updates timerDisplay.
+ */
+function updateDisplay(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  timerDisplay.textContent = `${minutes < 10 ? "0" + minutes : minutes}:${
+    secs < 10 ? "0" + secs : secs
+  }`;
+}
+
+/**
+ * updateCircle(isReset)
+ * Adjusts the SVG circle's stroke-dasharray to show time progress.
+ */
+function updateCircle(isReset = false) {
+  if (isReset) {
+    circle.style.strokeDasharray = "100, 100";
+    return;
+  }
+  const currentInterval = intervals[currentIntervalIndex];
+  const fractionLeft = (timeLeft / currentInterval.duration) * 100;
+  circle.style.strokeDasharray = `${fractionLeft}, 100`;
+}
