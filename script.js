@@ -33,6 +33,25 @@ const timerDisplay = document.getElementById("timer");
 const intervalLabel = document.getElementById("intervalLabel");
 const circle = document.querySelector(".circle");
 
+// Modal elements
+const modalElement = document.getElementById("intervalModal");
+const modalTitle = document.getElementById("modalTitle");
+const modalBody = document.getElementById("modalBody");
+const modalNextBtn = document.getElementById("modalNextBtn");
+
+// Initialize a Bootstrap modal instance (if using Bootstrap 5)
+const intervalModal = new bootstrap.Modal(modalElement, {
+  backdrop: "static", // optional: prevent closing by clicking outside
+  keyboard: false, // optional: prevent closing with ESC
+});
+
+// The "Next" button in the modal starts the next interval
+modalNextBtn.addEventListener("click", () => {
+  intervalModal.hide();
+  // Move to the next interval
+  moveToNextInterval();
+});
+
 /************************************************************
  * Initialization
  ************************************************************/
@@ -111,13 +130,50 @@ function updateTimer() {
   if (timeLeft <= 0) {
     clearInterval(timerInterval);
     timerInterval = null;
-    moveToNextInterval();
+    // Reset the Start/Stop button
+    startButton.textContent = "Start";
+    startButton.classList.remove("btn-secondary");
+    startButton.classList.add("btn-primary");
+
+    // Show a modal (instead of moving automatically)
+    showCompletionModal();
     return;
   }
 
   timeLeft--;
   updateDisplay(timeLeft);
   updateCircle();
+}
+
+/**
+ * showCompletionModal()
+ * Displays a popup with a message. The user can press "Next" to move on.
+ */
+function showCompletionModal() {
+  const currentInterval = intervals[currentIntervalIndex];
+  // Check if we are at the last interval
+  const isLastInterval = currentIntervalIndex === intervals.length - 1;
+
+  if (isLastInterval) {
+    // The last interval is complete
+    modalTitle.textContent = "Full Pomodoro Cycle Complete!";
+    modalBody.textContent = "You have completed a full Pomodoro cycle.";
+    modalNextBtn.textContent = "Start New Cycle";
+  } else {
+    // We finished a Work or Break interval
+    if (currentInterval.name.toLowerCase().includes("work")) {
+      modalTitle.textContent = "Work Cycle Complete!";
+      modalBody.textContent = "Great work! you have completed a work cycle!";
+      modalNextBtn.textContent = "Start Break";
+    } else {
+      modalTitle.textContent = "Break Complete!";
+      modalBody.textContent = "Time to get back to work!";
+      modalNextBtn.textContent = "Start Next Work Cycle";
+    }
+  }
+
+  // Show the modal
+  intervalModal.show();
 }
 
 /**
@@ -137,25 +193,20 @@ function resetTimer() {
 
 /**
  * moveToNextInterval()
- * Advances currentIntervalIndex to the next interval.
- * If we exceed the array length, either loop or stop.
+ * Increments currentIntervalIndex. If it was the last interval,
+ * we can reset or loop based on your preference.
  */
 function moveToNextInterval() {
-  currentIntervalIndex++;
-
-  // If we've completed all intervals, loop or handle differently
-  if (currentIntervalIndex >= intervals.length) {
-    // Looping back to the first interval:
-    currentIntervalIndex = 0;
-    // or stop if you prefer:
-    // alert("All intervals complete!");
-    // return;
+  // If we were at the last interval
+  if (currentIntervalIndex === intervals.length - 1) {
+    // Start a brand new cycle
+    resetTimer();
+    return;
   }
 
-  // Load the new interval
+  // Otherwise, move on normally
+  currentIntervalIndex++;
   loadInterval();
-  // Optionally auto-start the next interval
-  startTimer();
 }
 
 /**
